@@ -4,13 +4,14 @@ namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 class GTSController extends AbstractController
 {
     /**
      * @Route("/g/t/s", name="app_g_t_s")
      */
+    #[Route("/g/t/s", name: "app_g_t_s")]
     public function index(): Response
     {
         return $this->render('gts/index.html.twig', [
@@ -21,6 +22,7 @@ class GTSController extends AbstractController
     /**
      * @Route("/worldexchange/info", name="ping_server")
      */
+    #[Route("/pokemonrse/worldexchange/info", name: "ping_server")]
     public function info()
     {
         $online = 0x0001;
@@ -32,6 +34,7 @@ class GTSController extends AbstractController
     /**
      * @Route("/worldexchange/result", name="gts_result")
      */
+    #[Route("/pokemonrse/worldexchange/result", name: "gts_result")]
     public function result()
     {
         doAuth();
@@ -53,6 +56,7 @@ class GTSController extends AbstractController
     /**
      * @Route("/worldexchange/get", name="gts_get")
      */
+    #[Route("/pokemonrse/worldexchange/get", name: "gts_get")]
     public function get_result()
     {
         doAuth();

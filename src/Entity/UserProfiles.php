@@ -5,81 +5,51 @@ namespace App\Entity;
 use App\Repository\UserProfilesRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass=UserProfilesRepository::class)
- */
+#[ORM\Entity(repositoryClass: UserProfilesRepository::class)]
 class UserProfiles
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: "integer")]
     private $id;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Column(type: "integer")]
     private $Version;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Column(type: "integer")]
     private $RomHackID;
 
-    /**
-     * @ORM\Column(type="smallint")
-     */
+    #[ORM\Column(type: "smallint")]
     private $RomHackVer;
 
-    /**
-     * @ORM\Column(type="binary")
-     */
+    #[ORM\Column(type: "binary")]
     private $Language;
 
-    /**
-     * @ORM\Column(type="binary")
-     */
+    #[ORM\Column(type: "binary")]
     private $Country;
 
-    /**
-     * @ORM\Column(type="binary")
-     */
+    #[ORM\Column(type: "binary")]
     private $Region;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Column(type: "integer")]
     private $TrainerID;
 
-    /**
-     * @ORM\Column(type="string", length=16)
-     */
+    #[ORM\Column(type: "string", length: 16)]
     private $TrainerName;
 
-    /**
-     * @ORM\Column(type="bigint")
-     */
+    #[ORM\Column(type: "bigint")]
     private $MAC;
 
-    /**
-     * @ORM\Column(type="string", length=56)
-     */
+    #[ORM\Column(type: "string", length: 56)]
     private $Email;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Column(type: "integer")]
     private $Notify;
 
-    /**
-     * @ORM\Column(type="smallint")
-     */
+    #[ORM\Column(type: "smallint")]
     private $ClientSecret;
 
-    /**
-     * @ORM\Column(type="smallint")
-     */
+    #[ORM\Column(type: "smallint")]
     private $MailSecret;
 
     public function getId(): ?int

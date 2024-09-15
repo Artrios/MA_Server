@@ -3,15 +3,18 @@
 namespace App\Controller;
 
 use App\Entity\UserProfiles;
+use App\Service\MA_Helper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 class ProfileController extends AbstractController
 {
     /**
      * @Route("/pokemonrse/common", name="app_profile")
      */
+    #[Route("/pokemonrse/common", name: "app_profile")]
     public function index(): Response
     {
         return $this->render('profile/index.html.twig', [
@@ -23,10 +26,11 @@ class ProfileController extends AbstractController
     /**
      * @Route("/pokemonrse/common/createprofile", name="create_profile")
      */
-    public function create()
+    #[Route("/pokemonrse/common/createprofile", name: "create_profile")]
+    public function create(MA_Helper $helper, EntityManagerInterface $entityManager)
     {
         $pid = $_GET['pid'];
-        doAuth();
+        $helper->doAuth();
 
         //create new user profile
         $profile = new UserProfiles();
@@ -46,10 +50,10 @@ class ProfileController extends AbstractController
         $profile->setMailSecret(0);
 
         //Entity manager
-        $em = $this->getDoctrine()->getManager();
+        //$em = $this->getDoctrine()->getManager();
         //Add to db
-        $em->persist($profile);
-        $em->flush();
+        $entityManager->persist($profile);
+        $entityManager->flush();
 
         $ar = pack('N', $profile->getId());
 
@@ -59,18 +63,19 @@ class ProfileController extends AbstractController
     /**
      * @Route("/pokemonrse/common/setprofile", name="set_profile")
      */
-    public function set(UserProfilesRepository $profileRepository)
+    #[Route("/pokemonrse/common/setprofile", name: "set_profile")]
+    public function set(MA_Helper $helper, UserProfilesRepository $profile)
     {
-        doAuth();
+        $helper->doAuth();
 
-        $profile = $profileRepository->find($_GET['pid']);
+        $profile = $profile->find($_GET['pid']);
 
         if($profile==NULL){
             return new Response('',Response::HTTP_UNAUTHORIZED);
         }
 
 
-        $profileData = decrypt_data();
+        $profileData = $helper->decrypt_data();
 
         if($profile->getTrainerID!=substr($profileData,10,4)){
             return new Response('',Response::HTTP_UNAUTHORIZED);
@@ -113,4 +118,5 @@ class ProfileController extends AbstractController
 
         return new Response($ar,Response::HTTP_OK,["content-length" => 8]);
     }
+    
 }
