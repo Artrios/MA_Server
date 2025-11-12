@@ -2,9 +2,11 @@
 
 namespace App\Controller;
 
+use App\Entity\PokemonGTS;
 use App\Service\MA_Helper;
 use App\Service\GTS_Helper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -30,7 +32,7 @@ class GTSController extends AbstractController
         $online = 0x0001;
         $ar = pack('n', $online);
 
-        return new Response($ar,Response::HTTP_OK);;
+        return new Response($ar,Response::HTTP_OK);
     }
 
     /**
@@ -40,35 +42,51 @@ class GTSController extends AbstractController
      * pkmn = If the Pokemon has been traded it returns the new Pokemon (100 bytes)
      */
     #[Route("/pokemonrse/worldexchange/result", name: "gts_result")]
-    public function result(MA_Helper $helper)
+    public function result(MA_Helper $helper, EntityManagerInterface $entityManager)
     {
         $helper->doAuth();
+        dump("success!");
 
-        $result=check_result();
+        $repository = $entityManager->getRepository(PokemonGTS::class);
 
-        if(strlen($result)==2){
-            $ar = pack('n', $result);
-        }
-        elseif(strlen($result)==100){
-            $ar = pack('n', $result);
+        $pid = $_GET['pid'];
+        dump("check0");
+        $pokemon=$repository->findDepositedPokemon($pid);
+        dump("check1");
+
+        if($pokemon==NULL){
+            dump("check2");
+            $result=0x0005;
         }
         else{
-            return new Response($ar,Response::HTTP_INTERNAL_SERVER_ERROR);
+            if($pokemon->getIsExchanged()==0){
+                dump("check3");
+                $result=0x0004;
+            }
+            else{
+                dump("check4");
+                $result=$pokemon->getPokemon();
+            }
         }
-        return new Response($ar,Response::HTTP_OK,["content-length" => strlen($result)]);
+
+        //$result=$GTS->check_result();
+        dump(strlen($result));
+        $ar = pack('n', $result);
+        
+        return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
     }
 
     /**
      * Retrieves the deposited Pokemon
      */
     #[Route("/pokemonrse/worldexchange/get", name: "gts_get")]
-    public function get_result(MA_Helper $helper)
+    public function get_result(MA_Helper $helper, GTS_Helper $GTS)
     {
         $helper->doAuth();
 
-        $result=get_deposited();
+        $result=$GTS->get_deposited();
 
-        if($result!=1){
+        if(strlen($result)!=100){
             return new Response($ar,Response::HTTP_SERVICE_UNAVAILABLE);
         }
 
@@ -79,77 +97,108 @@ class GTSController extends AbstractController
     /**
      * When a traded Pokemon has been retreived delete it from the server
      */
-    #[Route("/pokemonrse/worldexchange/delete", name: "gts_get")]
-    public function delete_result(MA_Helper $helper)
+    #[Route("/pokemonrse/worldexchange/delete", name: "gts_delete")]
+    public function delete_result(MA_Helper $helper, GTS_Helper $GTS, EntityManagerInterface $entityManager)
     {
         $helper->doAuth();
 
-        $result=get_deposited();
+        $result=$GTS->remove_pokemon();
 
-        if($result!=1){
+        if($result==NULL){
             return new Response($ar,Response::HTTP_SERVICE_UNAVAILABLE);
         }
 
-        $ar = pack('n', $result);
+        $entityManager->remove($result);
+        $entityManager->flush();
+
+        $ar = pack('n', 0x0001);
         return new Response($ar,Response::HTTP_OK,["content-length" => strlen($result)]);
     }
 
     /**
      * When a deposited Pokemon has been retreived delete it from the server
      */
-    #[Route("/pokemonrse/worldexchange/return", name: "gts_get")]
-    public function return_result(MA_Helper $helper, GTS_Helper $GTS)
+    #[Route("/pokemonrse/worldexchange/return", name: "gts_return")]
+    public function return_result(MA_Helper $helper, GTS_Helper $GTS, EntityManagerInterface $entityManager)
     {
         $helper->doAuth();
 
         $result=$GTS->remove_pokemon();
 
-        if($result!=1){
+        if($result==NULL){
             return new Response($ar,Response::HTTP_SERVICE_UNAVAILABLE);
         }
 
-        $ar = pack('n', $result);
+        $entityManager->remove($result);
+        $entityManager->flush();
+
+        $ar = pack('n', 0x0001);
         return new Response($ar,Response::HTTP_OK,["content-length" => strlen($result)]);
     }
 
     /**
      * Deposited a Pokemon into the GTS
      */
-    #[Route("/pokemonrse/worldexchange/post", name: "gts_get")]
-    public function post_pokemon(MA_Helper $helper, PokemonGTSRepository $pokemon)
+    #[Route("/pokemonrse/worldexchange/post", name: "gts_post")]
+    public function post_pokemon(MA_Helper $helper, EntityManagerInterface $entityManager)
     {
         $helper->doAuth();
 
-        $result=get_deposited();
-
-
-
-        $pokemon = $pokemon->find($_GET['pid']);
-
-        if($pokemon==NULL){
-            return new Response('',Response::HTTP_UNAUTHORIZED);
-        }
-
-
         $pokemonData = $helper->decrypt_data();
-
-        if($pokemon->getTrainerID!=substr($pokemonData,10,4)){
+        if($pokemonData == 0){
+            dump("decrypt failed");
             return new Response('',Response::HTTP_UNAUTHORIZED);
         }
+        
 
         //Check Version (only emerald at the moment)
-        if(substr($pokemonData,0,1) != 0x03){
+
+        dump("post");
+        if(substr($pokemonData,113,2) != 0x03){
+            dump("version failed");
+            dump(ord(substr($pokemonData,110,1)));//0
+            dump(ord(substr($pokemonData,111,1)));//0
+            dump(ord(substr($pokemonData,112,1)));//0
+            dump(ord(substr($pokemonData,113,3)));//0
+            dump(ord(substr($pokemonData,114,1)));//3
+            dump(ord(substr($pokemonData,115,1)));//0
+            dump(ord(substr($pokemonData,116,1)));//13
+            dump(ord(substr($pokemonData,117,1)));
+            dump(ord(substr($pokemonData,118,1)));
+            dump(ord(substr($pokemonData,119,1)));
             return new Response('',Response::HTTP_UNAUTHORIZED);
         }
         //Check Language (only english at the moment)
-        if(substr($pokemonData,7,1) != 0x02){
+        if(substr($pokemonData,146,1) != 0x02){
+            dump("lang failed");
+            dump(ord(substr($pokemonData,119,2)));
             return new Response('',Response::HTTP_UNAUTHORIZED);
         }
 
-        $pokemon->setVersion(substr($pokemonData,0,1));
-        $pokemon->setRomHackID(substr($pokemonData,1,4));
-        $pokemon->setRomHackVer(substr($pokemonData,5,2));
-        $pokemon->setLanguage(substr($profileData,7,1));
+        $pokemon = new PokemonGTS();
+
+        $pokemon->setChecksum(hexdec(substr($pokemonData,0,4)));
+        $pokemon->setPid(hexdec(substr($pokemonData,4,4)));
+        $pokemon->setPokemon(hex2bin(substr($pokemonData,8,80)));
+        $pokemon->setDexId(hexdec(substr($pokemonData,88,2)));
+        $pokemon->setGender(hex2bin(substr($pokemonData,90,1)));
+        $pokemon->setLevel(hex2bin(substr($pokemonData,91,1)));
+        $pokemon->setRequestedDexId(hexdec(substr($pokemonData,92,2)));
+        $pokemon->setRequestedGender(hex2bin(substr($pokemonData,94,1)));
+        $pokemon->setMinLevel(hex2bin(substr($pokemonData,95,1)));
+        $pokemon->setMaxLevel(hex2bin(substr($pokemonData,96,1)));
+        $pokemon->setTrainerGender(hex2bin(substr($pokemonData,97,1)));
+        $pokemon->setTrainerId(hexdec(substr($pokemonData,98,2)));
+        $pokemon->setSecretId(hexdec(substr($pokemonData,100,2)));
+        $pokemon->setOtname(substr($pokemonData,102,7));
+        $pokemon->setCountry(hex2bin(substr($pokemonData,109,1)));
+        $pokemon->setRegion(hex2bin(substr($pokemonData,110,1)));
+        $pokemon->setTrainerClass(hex2bin(substr($pokemonData,111,1)));
+        $pokemon->setIsExchanged(hexdec(substr($pokemonData,112,2)));
+        $pokemon->setVersion(hexdec(substr($pokemonData,113,2)));
+        $pokemon->setRomHackId(hexdec(substr($pokemonData,115,2)));
+        $pokemon->setRomHackVer(hexdec(substr($pokemonData,117,2)));
+        $pokemon->setLanguage(hex2bin(substr($pokemonData,119,1)));
 
         //Entity manager
         $em = $this->getDoctrine()->getManager();
@@ -158,12 +207,8 @@ class GTSController extends AbstractController
         $em->flush();
 
 
-        if($result!=1){
-            return new Response($ar,Response::HTTP_SERVICE_UNAVAILABLE);
-        }
-
-        $ar = pack('n', $result);
-        return new Response($ar,Response::HTTP_OK,["content-length" => strlen($result)]);
+        $ar = pack('n', 0x0001);
+        return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
     }
 
     /**
@@ -174,7 +219,7 @@ class GTSController extends AbstractController
     {
         $helper->doAuth();
 
-        $result=$GTS->remove_pokemon();
+        $result=0x0001;
 
         if($result!=1){
             return new Response($ar,Response::HTTP_SERVICE_UNAVAILABLE);
@@ -188,13 +233,14 @@ class GTSController extends AbstractController
      * Search for Pokemon in the GTS
      */
     #[Route("/pokemonrse/worldexchange/search", name: "gts_get")]
-    public function search_pokemon(MA_Helper $helper)
+    public function search_pokemon(MA_Helper $helper, EntityManagerInterface $entityManager)
     {
         $helper->doAuth();
 
-        $result=get_deposited();
+        $repository = $entityManager->getRepository(PokemonGTS::class);
+        $pokemon=$repository->searchPokemon($species, $minlevel, $maxlevel, $gender);
 
-        if($result!=1){
+        if($result==NULL){
             return new Response($ar,Response::HTTP_SERVICE_UNAVAILABLE);
         }
 

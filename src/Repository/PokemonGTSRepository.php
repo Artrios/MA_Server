@@ -16,28 +16,38 @@ class PokemonGTSRepository extends ServiceEntityRepository
         parent::__construct($registry, PokemonGTS::class);
     }
 
-    //    /**
-    //     * @return PokemonGTS[] Returns an array of PokemonGTS objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('p.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+        /**
+         * @return PokemonGTS[] Returns an array of PokemonGTS objects
+         */
+        public function searchPokemon($species, $minlevel, $maxlevel, $gender): array
+        {
+            $qb = $this->createQueryBuilder('p')
+                ->andWhere('p.dex_id = :species')
+                ->andWhere('p.level >= :minlevel')
+                ->andWhere('p.level <= :maxlevel')
+                ->setParameter('species', $species)
+                ->setParameter('minlevel', $minlevel)
+                ->setParameter('maxlevel', $maxlevel)
+            ;
 
-    //    public function findOneBySomeField($value): ?PokemonGTS
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+            if($gender=="ANY"){
+                $query = $qb->orderBy('p.id', 'ASC')->setMaxResults(10)->getQuery();
+                return $query->execute();
+            }
+
+            $qb->andWhere('p.gender = :gender')->setParameter('gender', $gender);
+            $query = $qb->orderBy('p.id', 'ASC')->setMaxResults(10)->getQuery();
+            return $query->execute();
+        }
+
+        // Get the player's deposited pokemon or the pokemon that's been traded to them
+        public function findDepositedPokemon($pid): ?PokemonGTS
+        {
+            return $this->createQueryBuilder('p')
+                ->where('p.pid = :val')
+                ->setParameter('val', $pid)
+                ->getQuery()
+                ->getOneOrNullResult()
+            ;
+        }
 }

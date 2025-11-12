@@ -17,7 +17,7 @@ class MA_Helper
                 $token = substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil(32/strlen($x)) )),1,32); //substr(base64_encode(random_bytes(32)), 0, 32);
                 
 
-                $hash = sha1("sAdeqWo3voLeC5r16DYv".$token);
+                $hash = strtoupper(sha1("sAdeqWo3voLeC5r16DYv".$token));
 
                 // Temporarily store the token using the part that the game sends back as key
                 session_id($hash);
@@ -64,37 +64,45 @@ class MA_Helper
     {
         $rData = $_GET['data'];
         $pid = $_GET['pid'];
+        
         $checksum = $rData[0].$rData[1].$rData[2].$rData[3];
-        $checksum = 0x4a3b2c1d xor $checksum;
-    
-        $rData = substr($rData, 4);
+
         $rData = str_replace("-", "+", $rData);
         $rData = str_replace("_", "/", $rData);
         $rData = base64_decode($rData);
     
+        $checksum = (ord($rData[0]) << 24)+(ord($rData[1]) << 16)+(ord($rData[2]) << 8)+ord($rData[3]);
+        $rData = substr($rData, 4);
+
+
         $GRNG = $checksum | ($checksum << 16);
         $keystream = ($GRNG >> 16) & 0xFF;
-        $i=4;
-        while($i<len($rData)){
-            $data[i] ^= $keystream;
+        $i=0;
+        while($i<strlen($rData)){
+            $rData[$i] = pack('C', ord($rData[$i]) ^ $keystream);
             $GRNG = ($GRNG * 0x45 + 0x1111) & 0x7FFFFFFF;
             $keystream = ($GRNG >> 16) & 0xFF;
+            $i=$i+1;
         }
+
+        $checksum = 0x4a3b2c1d ^ $checksum;
     
+
         //Check if checksum is same
         $verify = 0;
-        for($i = 0; $i <= strlen($pid); $i++){
-            $verify += $pid[$i];
-        }
+        $verify = hexdec($pid[0].$pid[1]);
+        $verify = $verify + hexdec($pid[2].$pid[3]);
+        $verify = $verify + hexdec($pid[4].$pid[5]);
+        $verify = $verify + hexdec($pid[6].$pid[7]);
     
-        for($i = 0; $i <= strlen($rData); $i++){
-            $verify += $rData[$i];
+        for($i = 4; $i < strlen($rData); $i++){
+            $verify = $verify + ord($rData[$i]);
         }
     
         if($verify != $checksum){
             return 0;
         }
     
-        return $data;
+        return $rData;
     }
 }
