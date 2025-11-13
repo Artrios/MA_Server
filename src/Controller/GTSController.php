@@ -50,9 +50,10 @@ class GTSController extends AbstractController
         $repository = $entityManager->getRepository(PokemonGTS::class);
 
         $pid = $_GET['pid'];
+        $pid = hexdec($pid);
         dump("check0");
+        dump($pid);
         $pokemon=$repository->findDepositedPokemon($pid);
-        dump("check1");
 
         if($pokemon==NULL){
             dump("check2");
@@ -154,57 +155,44 @@ class GTSController extends AbstractController
         //Check Version (only emerald at the moment)
 
         dump("post");
-        if(substr($pokemonData,113,2) != 0x03){
+        if(hexdec(bin2hex(substr($pokemonData,113,2))) != 0x03){
             dump("version failed");
-            dump(ord(substr($pokemonData,110,1)));//0
-            dump(ord(substr($pokemonData,111,1)));//0
-            dump(ord(substr($pokemonData,112,1)));//0
-            dump(ord(substr($pokemonData,113,3)));//0
-            dump(ord(substr($pokemonData,114,1)));//3
-            dump(ord(substr($pokemonData,115,1)));//0
-            dump(ord(substr($pokemonData,116,1)));//13
-            dump(ord(substr($pokemonData,117,1)));
-            dump(ord(substr($pokemonData,118,1)));
-            dump(ord(substr($pokemonData,119,1)));
             return new Response('',Response::HTTP_UNAUTHORIZED);
         }
         //Check Language (only english at the moment)
-        if(substr($pokemonData,146,1) != 0x02){
+        if(hexdec(bin2hex(substr($pokemonData,120,1))) != 0x02){
             dump("lang failed");
-            dump(ord(substr($pokemonData,119,2)));
             return new Response('',Response::HTTP_UNAUTHORIZED);
         }
 
         $pokemon = new PokemonGTS();
 
-        $pokemon->setChecksum(hexdec(substr($pokemonData,0,4)));
-        $pokemon->setPid(hexdec(substr($pokemonData,4,4)));
-        $pokemon->setPokemon(hex2bin(substr($pokemonData,8,80)));
-        $pokemon->setDexId(hexdec(substr($pokemonData,88,2)));
-        $pokemon->setGender(hex2bin(substr($pokemonData,90,1)));
-        $pokemon->setLevel(hex2bin(substr($pokemonData,91,1)));
-        $pokemon->setRequestedDexId(hexdec(substr($pokemonData,92,2)));
-        $pokemon->setRequestedGender(hex2bin(substr($pokemonData,94,1)));
-        $pokemon->setMinLevel(hex2bin(substr($pokemonData,95,1)));
-        $pokemon->setMaxLevel(hex2bin(substr($pokemonData,96,1)));
-        $pokemon->setTrainerGender(hex2bin(substr($pokemonData,97,1)));
-        $pokemon->setTrainerId(hexdec(substr($pokemonData,98,2)));
-        $pokemon->setSecretId(hexdec(substr($pokemonData,100,2)));
+        $pokemon->setChecksum(unpack('V', substr($pokemonData,0,4))[1]);
+        $pokemon->setPid(unpack('V', substr($pokemonData,4,4))[1]);
+        $pokemon->setPokemon(substr($pokemonData,8,80));
+        $pokemon->setDexId(unpack('v', substr($pokemonData,88,2))[1]);
+        $pokemon->setGender(unpack('C', substr($pokemonData,90,1))[1]);
+        $pokemon->setLevel(unpack('C', substr($pokemonData,91,1))[1]);
+        $pokemon->setRequestedDexId(unpack('v', substr($pokemonData,92,2))[1]);
+        $pokemon->setRequestedGender(unpack('C', substr($pokemonData,94,1))[1]);
+        $pokemon->setMinLevel(unpack('C', substr($pokemonData,95,1))[1]);
+        $pokemon->setMaxLevel(unpack('C', substr($pokemonData,96,1))[1]);
+        $pokemon->setTrainerGender(unpack('C', substr($pokemonData,97,1))[1]);
+        $pokemon->setTrainerId(unpack('v', substr($pokemonData,98,2))[1]);
+        $pokemon->setSecretId(unpack('v', substr($pokemonData,100,2))[1]);
         $pokemon->setOtname(substr($pokemonData,102,7));
-        $pokemon->setCountry(hex2bin(substr($pokemonData,109,1)));
-        $pokemon->setRegion(hex2bin(substr($pokemonData,110,1)));
-        $pokemon->setTrainerClass(hex2bin(substr($pokemonData,111,1)));
-        $pokemon->setIsExchanged(hexdec(substr($pokemonData,112,2)));
-        $pokemon->setVersion(hexdec(substr($pokemonData,113,2)));
-        $pokemon->setRomHackId(hexdec(substr($pokemonData,115,2)));
-        $pokemon->setRomHackVer(hexdec(substr($pokemonData,117,2)));
-        $pokemon->setLanguage(hex2bin(substr($pokemonData,119,1)));
+        $pokemon->setCountry(unpack('C', substr($pokemonData,110,1))[1]);
+        $pokemon->setRegion(unpack('C', substr($pokemonData,111,1))[1]);
+        $pokemon->setTrainerClass(unpack('C', substr($pokemonData,112,1))[1]);
+        $pokemon->setIsExchanged(unpack('C', substr($pokemonData,113,1))[1]);
+        $pokemon->setVersion(unpack('v', substr($pokemonData,114,2))[1]);
+        $pokemon->setRomHackId(unpack('v', substr($pokemonData,116,2))[1]);
+        $pokemon->setRomHackVer(unpack('v', substr($pokemonData,118,2))[1]);
+        $pokemon->setLanguage(unpack('C', substr($pokemonData,120,1))[1]);
 
-        //Entity manager
-        $em = $this->getDoctrine()->getManager();
         //Add to db
-        $em->persist($pokemon);
-        $em->flush();
+        $entityManager->persist($pokemon);
+        $entityManager->flush();
 
 
         $ar = pack('n', 0x0001);
@@ -214,19 +202,13 @@ class GTSController extends AbstractController
     /**
      * Confirm Pokemon has been deposited during saving
      */
-    #[Route("/pokemonrse/worldexchange/post_finish", name: "gts_get")]
-    public function post_finish(MA_Helper $helper, GTS_Helper $GTS)
+    #[Route("/pokemonrse/worldexchange/post_finish", name: "gts_post_finish")]
+    public function post_finish(MA_Helper $helper)
     {
         $helper->doAuth();
 
-        $result=0x0001;
-
-        if($result!=1){
-            return new Response($ar,Response::HTTP_SERVICE_UNAVAILABLE);
-        }
-
-        $ar = pack('n', $result);
-        return new Response($ar,Response::HTTP_OK,["content-length" => strlen($result)]);
+        $ar = pack('n', 0x0001);
+        return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
     }
 
     /**
