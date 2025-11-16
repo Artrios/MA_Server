@@ -45,36 +45,29 @@ class GTSController extends AbstractController
     public function result(MA_Helper $helper, EntityManagerInterface $entityManager)
     {
         $helper->doAuth();
-        dump("success!");
 
         $repository = $entityManager->getRepository(PokemonGTS::class);
 
         $pid = $_GET['pid'];
         $pid = hexdec($pid);
-        dump("check0");
-        dump($pid);
         $pokemon=$repository->findDepositedPokemon($pid);
 
         if($pokemon==NULL){
-            dump("check2");
             $result=0x0005;
         }
         else{
-            if($pokemon->getIsExchanged()==0){
-                dump("check3");
-                $result=0x0004;
+            if($pokemon->getIsExchanged()==1){
+                $result=$pokemon->getPokemon();
             }
             else{
-                dump("check4");
-                $result=$pokemon->getPokemon();
+                $result=0x0004;
             }
         }
 
-        //$result=$GTS->check_result();
         dump(strlen($result));
         $ar = pack('n', $result);
         
-        return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
+        return new Response($ar,Response::HTTP_OK,["content-length" => strlen($result)]);
     }
 
     /**
@@ -184,7 +177,7 @@ class GTSController extends AbstractController
         $pokemon->setCountry(unpack('C', substr($pokemonData,110,1))[1]);
         $pokemon->setRegion(unpack('C', substr($pokemonData,111,1))[1]);
         $pokemon->setTrainerClass(unpack('C', substr($pokemonData,112,1))[1]);
-        $pokemon->setIsExchanged(unpack('C', substr($pokemonData,113,1))[1]);
+        $pokemon->setIsExchanged(2);
         $pokemon->setVersion(unpack('v', substr($pokemonData,114,2))[1]);
         $pokemon->setRomHackId(unpack('v', substr($pokemonData,116,2))[1]);
         $pokemon->setRomHackVer(unpack('v', substr($pokemonData,118,2))[1]);
@@ -203,11 +196,27 @@ class GTSController extends AbstractController
      * Confirm Pokemon has been deposited during saving
      */
     #[Route("/pokemonrse/worldexchange/post_finish", name: "gts_post_finish")]
-    public function post_finish(MA_Helper $helper)
+    public function post_finish(MA_Helper $helper, EntityManagerInterface $entityManager)
     {
         $helper->doAuth();
 
-        $ar = pack('n', 0x0001);
+        $repository = $entityManager->getRepository(PokemonGTS::class);
+
+        $pid = $_GET['pid'];
+        $pid = hexdec($pid);
+        $pokemon=$repository->findDepositedPokemon($pid);
+
+        if($pokemon==NULL){
+            $result=0x0002;
+        }
+        else{
+            $pokemon->setIsExchanged(0);
+            $entityManager->persist($pokemon);
+            $entityManager->flush();
+            $result=0x0001;
+        }
+
+        $ar = pack('n', $result);
         return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
     }
 
