@@ -31,7 +31,7 @@ class MA_Helper
                 print $token;
                 exit();
             } else {
-                $hash = $_GET['hash'];
+                $hash = strtoupper($_GET['hash']);
                 
                 // Get the full token back
                 session_id($hash);
