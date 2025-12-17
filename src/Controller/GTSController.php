@@ -249,19 +249,90 @@ class GTSController extends AbstractController
     public function search_pokemon(MA_Helper $helper, EntityManagerInterface $entityManager)
     {
         $helper->doAuth();
+        dump("search");
+
+        $searchData = $helper->decrypt_data();
+        if($searchData == 0){
+            dump("decrypt failed");
+            return new Response('',Response::HTTP_UNAUTHORIZED);
+        }
+        dump("decrypt successful");
+        
+        $checksum=unpack('V', substr($searchData,0,4))[1];
+        $species=unpack('v', substr($searchData,4,2))[1];
+        $gender="ANY";
+        $minlevel=unpack('C', substr($searchData,7,1))[1];
+        $maxlevel=unpack('C', substr($searchData,8,1))[1];
 
         $repository = $entityManager->getRepository(PokemonGTS::class);
-        $pokemon=$repository->searchPokemon($species, $minlevel, $maxlevel, $gender);
 
-        if($result==NULL){
+        $pid = $_GET['pid'];
+        $pid = hexdec($pid);
+        $pokemon=$repository->searchPokemon($species, $minlevel, $maxlevel, $gender, $pid);
+        dump("search complete");
+        dump(count($pokemon));
+
+        $result="";
+        if($pokemon==NULL){
             $result=0x0001;
         }
         else{
-            $result=$pokemon; //TODO
+            dump($pokemon);
+            for($i=0;$i<count($pokemon);$i++){
+                dump("Start");
+                $result = $result.pack('V', $pokemon[$i]->getChecksum());
+                dump(strlen($result));
+                $result = $result.pack('V', $pokemon[$i]->getPid());
+                dump(strlen($result));
+                $result = $result.stream_get_contents($pokemon[$i]->getPokemon());
+                dump(strlen($result));
+                $result = $result.pack('v', $pokemon[$i]->getDexId());
+                dump(strlen($result));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getGender()));
+                dump(pack('C', stream_get_contents($pokemon[$i]->getGender())));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getLevel()));
+                dump(pack('C', stream_get_contents($pokemon[$i]->getLevel())));
+                $result = $result.pack('v', $pokemon[$i]->getRequestedDexId());
+                dump(strlen($result));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getRequestedGender()));
+                dump(strlen($result));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getMinLevel()));
+                dump(strlen($result));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getMaxLevel()));
+                dump(strlen($result));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getTrainerGender()));
+                dump(strlen($result));
+                $result = $result.pack('v', $pokemon[$i]->getTrainerId());
+                dump(strlen($result));
+                $result = $result.pack('v', $pokemon[$i]->getSecretId());
+                dump(strlen($result));
+                $result = $result.$pokemon[$i]->getOtname();
+                dump(strlen($result));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getCountry()));
+                dump(strlen($result));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getRegion()));
+                dump(strlen($result));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getTrainerClass()));
+                dump(strlen($result));
+                $result = $result.pack('v', $pokemon[$i]->getIsExchanged());
+                dump(strlen($result));
+                $result = $result.pack('v', $pokemon[$i]->getVersion());
+                dump(pack('v', $pokemon[$i]->getVersion()));
+                $result = $result.pack('v', $pokemon[$i]->getRomHackId());
+                dump(pack('v', $pokemon[$i]->getRomHackId()));
+                $result = $result.pack('v', $pokemon[$i]->getRomHackVer());
+                dump(pack('v', $pokemon[$i]->getRomHackVer()));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getLanguage()));
+                dump(pack('C', (int)stream_get_contents($pokemon[$i]->getLanguage())));
+                $result = $result."\x00\x00\x00";
+
+            }
+            dump(strlen($result));
+
         }
 
-        $ar = pack('n', $result);
-        return new Response($ar,Response::HTTP_OK,["content-length" => strlen($result)]);
+        //$ar = pack('n', $result);
+        return new Response($result,Response::HTTP_OK,["content-length" => strlen($result)]);
     }
 
     /**
