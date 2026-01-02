@@ -23,8 +23,8 @@ class PokemonGTSRepository extends ServiceEntityRepository
         {
             $qb = $this->createQueryBuilder('p')
                 ->andWhere('p.dex_id = :species')
-                ->andWhere('p.level >= :minlevel')
-                ->andWhere('p.level <= :maxlevel')
+                ->andWhere('CAST(p.level AS UNSIGNED) >= :minlevel')
+                ->andWhere('CAST(p.level AS UNSIGNED) <= :maxlevel')
                 ->andWhere('p.pid != :pid')
                 ->setParameter('species', $species)
                 ->setParameter('minlevel', $minlevel)

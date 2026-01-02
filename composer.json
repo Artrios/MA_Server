@@ -8,6 +8,7 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "amphp/http-client": "^4.2.1",
+        "beberlei/doctrineextensions": "^1.5",
         "doctrine/annotations": "^2.0",
         "doctrine/dbal": "^3",
         "doctrine/doctrine-bundle": "^2.12",

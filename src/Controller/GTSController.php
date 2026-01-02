@@ -277,53 +277,29 @@ class GTSController extends AbstractController
             $result=0x0001;
         }
         else{
-            dump($pokemon);
             for($i=0;$i<count($pokemon);$i++){
-                dump("Start");
                 $result = $result.pack('V', $pokemon[$i]->getChecksum());
-                dump(strlen($result));
                 $result = $result.pack('V', $pokemon[$i]->getPid());
-                dump(strlen($result));
                 $result = $result.stream_get_contents($pokemon[$i]->getPokemon());
-                dump(strlen($result));
                 $result = $result.pack('v', $pokemon[$i]->getDexId());
-                dump(strlen($result));
                 $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getGender()));
-                dump(pack('C', stream_get_contents($pokemon[$i]->getGender())));
                 $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getLevel()));
-                dump(pack('C', stream_get_contents($pokemon[$i]->getLevel())));
                 $result = $result.pack('v', $pokemon[$i]->getRequestedDexId());
-                dump(strlen($result));
                 $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getRequestedGender()));
-                dump(strlen($result));
                 $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getMinLevel()));
-                dump(strlen($result));
                 $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getMaxLevel()));
-                dump(strlen($result));
                 $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getTrainerGender()));
-                dump(strlen($result));
                 $result = $result.pack('v', $pokemon[$i]->getTrainerId());
-                dump(strlen($result));
                 $result = $result.pack('v', $pokemon[$i]->getSecretId());
-                dump(strlen($result));
-                $result = $result.$pokemon[$i]->getOtname();
-                dump(strlen($result));
+                $result = $result.str_pad($pokemon[$i]->getOtname(), 7, "\xFF");
                 $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getCountry()));
-                dump(strlen($result));
                 $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getRegion()));
-                dump(strlen($result));
                 $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getTrainerClass()));
-                dump(strlen($result));
                 $result = $result.pack('v', $pokemon[$i]->getIsExchanged());
-                dump(strlen($result));
                 $result = $result.pack('v', $pokemon[$i]->getVersion());
-                dump(pack('v', $pokemon[$i]->getVersion()));
                 $result = $result.pack('v', $pokemon[$i]->getRomHackId());
-                dump(pack('v', $pokemon[$i]->getRomHackId()));
                 $result = $result.pack('v', $pokemon[$i]->getRomHackVer());
-                dump(pack('v', $pokemon[$i]->getRomHackVer()));
                 $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getLanguage()));
-                dump(pack('C', (int)stream_get_contents($pokemon[$i]->getLanguage())));
                 $result = $result."\x00\x00\x00";
 
             }
