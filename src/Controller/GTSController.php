@@ -52,16 +52,43 @@ class GTSController extends AbstractController
         $pid = hexdec($pid);
         $pokemon=$repository->findDepositedPokemon($pid);
 
+        $result="";
         if($pokemon==NULL){
+            dump("Pokemon not found");
             $result=0x0005;
         }
         else{
+            dump("Pokemon Found");
             if($pokemon->getIsExchanged()==1){
-                $result=$pokemon->getPokemon();
-                $ar = pack('n', $result);
-                return new Response($ar,Response::HTTP_OK,["content-length" => strlen($result)]);
+                dump("Sending Pokemon");
+                $result = $result.pack('V', $pokemon->getChecksum());
+                $result = $result.pack('V', $pokemon->getPid());
+                $result = $result.stream_get_contents($pokemon->getPokemon());
+                $result = $result.pack('v', $pokemon->getDexId());
+                $result = $result.pack('C', (int)stream_get_contents($pokemon->getGender()));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon->getLevel()));
+                $result = $result.pack('v', $pokemon->getRequestedDexId());
+                $result = $result.pack('C', (int)stream_get_contents($pokemon->getRequestedGender()));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon->getMinLevel()));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon->getMaxLevel()));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon->getTrainerGender()));
+                $result = $result.pack('v', $pokemon->getTrainerId());
+                $result = $result.pack('v', $pokemon->getSecretId());
+                $result = $result.str_pad($pokemon->getOtname(), 7, "\xFF");
+                $result = $result.pack('C', (int)stream_get_contents($pokemon->getCountry()));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon->getRegion()));
+                $result = $result.pack('C', (int)stream_get_contents($pokemon->getTrainerClass()));
+                $result = $result.pack('v', $pokemon->getIsExchanged());
+                $result = $result.pack('v', $pokemon->getVersion());
+                $result = $result.pack('v', $pokemon->getRomHackId());
+                $result = $result.pack('v', $pokemon->getRomHackVer());
+                $result = $result.pack('C', (int)stream_get_contents($pokemon->getLanguage()));
+                $result = $result."\x00\x00\x00";
+                dump(strlen($result));
+                return new Response($result,Response::HTTP_OK,["content-length" => strlen($result)]);
             }
             else{
+                dump("Pokemon not traded");
                 $result=0x0004;
             }
         }
@@ -105,8 +132,9 @@ class GTSController extends AbstractController
     #[Route("/pokemonrse/worldexchange/delete", name: "gts_delete")]
     public function delete_result(MA_Helper $helper, GTS_Helper $GTS, EntityManagerInterface $entityManager)
     {
+        dump("try Auth");
         $helper->doAuth();
-
+        dump("gts_delete");
         $repository = $entityManager->getRepository(PokemonGTS::class);
 
         $pid = $_GET['pid'];
@@ -114,15 +142,18 @@ class GTSController extends AbstractController
         $pokemon=$repository->findDepositedPokemon($pid);
 
         if($pokemon==NULL){
+            dump("Pokemon not found");
             $result=0x0001;
+            return new Response('',Response::HTTP_UNAUTHORIZED);
         }
-        else{
-            $entityManager->remove($result);
-            $entityManager->flush();
-        }
+        
+        dump("Deleting Pokemon");
+        $entityManager->remove($pokemon);
+        $entityManager->flush();
+        $result=0x0001;
 
         $ar = pack('n', $result);
-        return new Response($ar,Response::HTTP_OK,["content-length" => strlen($result)]);
+        return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
     }
 
     /**
@@ -315,31 +346,36 @@ class GTSController extends AbstractController
      * Attempt to trade a Pokemon
      */
     #[Route("/pokemonrse/worldexchange/exchange", name: "gts_exchange")]
-    public function exchange_pokemon(MA_Helper $helper)
+    public function exchange_pokemon(MA_Helper $helper, EntityManagerInterface $entityManager)
     {
+        dump("exchange");
         $helper->doAuth();
+
+        dump("auth success");
+        $pid = $_GET['pid'];
+        $pid = hexdec($pid);
 
         $pokemonData = $helper->decrypt_data();
         if($pokemonData == 0){
             dump("decrypt failed");
             return new Response('',Response::HTTP_UNAUTHORIZED);
         }
-        
 
-
-        $repository = $entityManager->getRepository(PokemonGTS::class);
-
-        $pid = hexdec($pokemonData);
-        $pokemon=$repository->findDepositedPokemon($pid);
-
-        if($pokemon==NULL){
-            $result=0x0001;
+        dump("Sanity checks");
+        if(hexdec(bin2hex(substr($pokemonData,113,2))) != 0x03){
+            dump("version failed");
+            return new Response('',Response::HTTP_UNAUTHORIZED);
+        }
+        //Check Language (only english at the moment)
+        if(hexdec(bin2hex(substr($pokemonData,120,1))) != 0x02){
+            dump("lang failed");
+            return new Response('',Response::HTTP_UNAUTHORIZED);
         }
 
         $pokemon = new PokemonGTS();
 
         $pokemon->setChecksum(unpack('V', substr($pokemonData,0,4))[1]);
-        $pokemon->setPid(unpack('V', substr($pokemonData,121,4))[1]);
+        $pokemon->setPid(unpack('V', substr($pokemonData,4,4))[1]);
         $pokemon->setPokemon(substr($pokemonData,8,80));
         $pokemon->setDexId(unpack('v', substr($pokemonData,88,2))[1]);
         $pokemon->setGender(unpack('C', substr($pokemonData,90,1))[1]);
@@ -355,38 +391,79 @@ class GTSController extends AbstractController
         $pokemon->setCountry(unpack('C', substr($pokemonData,110,1))[1]);
         $pokemon->setRegion(unpack('C', substr($pokemonData,111,1))[1]);
         $pokemon->setTrainerClass(unpack('C', substr($pokemonData,112,1))[1]);
-        $pokemon->setIsExchanged(3);
+        $pokemon->setIsExchanged(2);
         $pokemon->setVersion(unpack('v', substr($pokemonData,114,2))[1]);
         $pokemon->setRomHackId(unpack('v', substr($pokemonData,116,2))[1]);
         $pokemon->setRomHackVer(unpack('v', substr($pokemonData,118,2))[1]);
         $pokemon->setLanguage(unpack('C', substr($pokemonData,120,1))[1]);
 
+        //Add to db
+        $entityManager->persist($pokemon);
+        $entityManager->flush();
 
 
-
-        if($result!=1){
-            return new Response($ar,Response::HTTP_SERVICE_UNAVAILABLE);
-        }
-
-        $ar = pack('n', $result);
-        return new Response($ar,Response::HTTP_OK,["content-length" => strlen($result)]);
+        $ar = pack('n', 0x0001);
+        return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
     }
 
     /**
      * Confirm Pokemon has been traded during saving
      */
     #[Route("/pokemonrse/worldexchange/exchange_finish", name: "gts_exchange_finish")]
-    public function exchange_finish(MA_Helper $helper)
+    public function exchange_finish(MA_Helper $helper, EntityManagerInterface $entityManager)
     {
         $helper->doAuth();
 
-        $result=get_deposited();
+        $pid = $_GET['pid'];
+        $pid = hexdec($pid);
+        $pidold = $_GET['data'];
+        $pidold = hexdec($pidold);
 
-        if($result!=1){
-            return new Response($ar,Response::HTTP_SERVICE_UNAVAILABLE);
+        dump($pid);
+        dump($pidold);
+
+        //Find old Pokemon
+        $repository = $entityManager->getRepository(PokemonGTS::class);
+        $pokemonold=$repository->findDepositedPokemon($pidold);
+
+        if($pokemonold==NULL){
+            dump("No old poke");
+            $ar = pack('n', 0x0002);
+            return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
         }
 
-        $ar = pack('n', $result);
-        return new Response($ar,Response::HTTP_OK,["content-length" => strlen($result)]);
+        if($pokemonold->getIsExchanged() != 0){
+            dump("Old Pokemon not available");
+            dump($pokemonold->getIsExchanged());
+            $ar = pack('n', 0x0003);
+            return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
+        }
+
+        //Edit old Pokemon
+        $pokemonold->setIsExchanged(3);
+        $entityManager->persist($pokemonold);
+        $entityManager->flush();
+
+        dump("Swell");
+        dump($pid);
+        dump($pokemonold->getPid());
+
+        //Edit new Pokemon
+        $repository = $entityManager->getRepository(PokemonGTS::class);
+        $pokemon=$repository->findExchangedPokemon($pid);
+        if($pokemon==NULL){
+            $ar = pack('n', 0x0004);
+            $pokemonold->setIsExchanged(0);
+            $entityManager->persist($pokemonold);
+            $entityManager->flush();
+            return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
+        }
+        $pokemon->setPid($pidold);
+        $pokemon->setIsExchanged(1);
+        $entityManager->persist($pokemon);
+        $entityManager->flush();
+
+        $ar = pack('n', 0x0001);
+        return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
     }
 }

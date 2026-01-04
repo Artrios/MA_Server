@@ -26,6 +26,7 @@ class PokemonGTSRepository extends ServiceEntityRepository
                 ->andWhere('CAST(p.level AS UNSIGNED) >= :minlevel')
                 ->andWhere('CAST(p.level AS UNSIGNED) <= :maxlevel')
                 ->andWhere('p.pid != :pid')
+                ->andWhere('p.is_exchanged = 0')
                 ->setParameter('species', $species)
                 ->setParameter('minlevel', $minlevel)
                 ->setParameter('maxlevel', $maxlevel)
@@ -47,6 +48,19 @@ class PokemonGTSRepository extends ServiceEntityRepository
         {
             return $this->createQueryBuilder('p')
                 ->where('p.pid = :val')
+                ->andWhere('p.is_exchanged < 3')
+                ->setParameter('val', $pid)
+                ->getQuery()
+                ->getOneOrNullResult()
+            ;
+        }
+
+        // Get the pokemon the player is trying to trade with
+        public function findExchangedPokemon($pid): ?PokemonGTS
+        {
+            return $this->createQueryBuilder('p')
+                ->where('p.pid = :val')
+                ->andWhere('p.is_exchanged = 2')
                 ->setParameter('val', $pid)
                 ->getQuery()
                 ->getOneOrNullResult()
