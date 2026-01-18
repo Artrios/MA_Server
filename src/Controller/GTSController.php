@@ -52,13 +52,14 @@ class GTSController extends AbstractController
         $pid = hexdec($pid);
         $pokemon=$repository->findDepositedPokemon($pid);
 
-        $result="";
+        
         if($pokemon==NULL){
             dump("Pokemon not found");
             $result=0x0005;
         }
         else{
             dump("Pokemon Found");
+            $result="";
             if($pokemon->getIsExchanged()==1){
                 dump("Sending Pokemon");
                 $result = $result.pack('V', $pokemon->getChecksum());
@@ -93,9 +94,9 @@ class GTSController extends AbstractController
             }
         }
 
-        dump(strlen($result));
+        dump($result);
         $ar = pack('n', $result);
-        
+        dump($ar);
         return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
     }
 
@@ -360,6 +361,19 @@ class GTSController extends AbstractController
             dump("decrypt failed");
             return new Response('',Response::HTTP_UNAUTHORIZED);
         }
+        /* /exchange needs to lock pokemon before doing /exchange_finish
+        $pid2=unpack('C', substr($pokemonData,121,4))[1]
+        $pokemon=$repository->findDepositedPokemon($pid2);
+        if($pokemon==NULL){
+            //Traded to another player
+            $ar = pack('n', 0x0002);
+            return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
+        }
+        elseif($pokemon->getIsExchanged() != 0){
+            //Traded to another player
+            $ar = pack('n', 0x0002);
+            return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
+        }*/
 
         dump("Sanity checks");
         if(hexdec(bin2hex(substr($pokemonData,113,2))) != 0x03){
