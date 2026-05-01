@@ -1,20 +1,180 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello MainController!{% endblock %}
+{% block title %}PoryNET{% endblock %}
+
+
 
 {% block body %}
+<link href="{{ asset('css/w3.css') }}" rel="stylesheet">
 <style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+    @font-face {
+      font-family: 'pokefont'; /* set name */
+      src: url(pokemon-emerald.otf.woff2); /* url of the font */
+      font-weight:normal;
+      transform: translateZ(0);
+    }
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
+    body {
+      background-size: 32px 32px;
+      background-color: #EAEAEAFF;
+      background-image:
+        linear-gradient(to right, #DDDDDDFF 1px, transparent 1px),
+        linear-gradient(to bottom, #DDDDDDFF 1px, transparent 1px);
+    }
+  </style>
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code><a href="{{ '/home/dylan/MA_Server/src/Controller/MainController.php'|file_link(0) }}">src/Controller/MainController.php</a></code></li>
-        <li>Your template at <code><a href="{{ '/home/dylan/MA_Server/templates/main/index.html.twig'|file_link(0) }}">templates/main/index.html.twig</a></code></li>
-    </ul>
+
+<div class="w3-bar w3-pory" style="height:52px;">
+<a href="#" class="w3-bar-item"
+    style="padding:0px 5px;float:left;width:auto;border:none;display:flex;outline:0;"><img src="{{ asset('images/porygon.png') }}" style=" image-rendering: pixelated;"></a>
+<a href="#" class="w3-bar-item w3-button w3-hover-pory"
+    style="font-size:30px;padding:2px 25px 0px 0px;"><b>PoryNET</b></a>
+<a href="#" class="w3-bar-item w3-button w3-hover-dark-pory"
+    style="font-size:20px; padding:11px 16px;"><b>GTS</b></a>
+<a href="#" class="w3-bar-item w3-button w3-hover-dark-pory"
+    style="font-size:20px; padding:11px 16px;"><b>Bank</b></a>
+<a href="#" class="w3-bar-item w3-button w3-hover-dark-pory"
+    style="font-size:20px; padding:11px 16px;"><b>Battles</b></a>
+<a href="#" class="w3-bar-item w3-button w3-hover-dark-pory"
+    style="font-size:20px; padding:11px 16px;"><b>About</b></a>
+<a href="#" class="w3-bar-item w3-button w3-pory w3-hover-dark-pory w3-right"
+    style="font-size:20px; padding:11px 16px;"><b>Sign In</b></a>
+</div>
+
+
+<div class="w3-container" style="margin: auto;width:60%;">
+
+<div class="w3-card-4 w3-white" style="margin-top: 16px; border-radius:10px">
+    <header class="w3-container w3-pory" style="line-height: 1.0; border-radius:10px 10px 0px 0px">
+    <h2><b>Welcome</b></h2>
+    </header>
+
+    <div class="w3-container">
+    <p>PoryNET provides GTS, bank storage and other network features for Generation III games through the Mobile
+        Adapter GB.<br>
+        Currently only pokeemerald-expansion based hacks are compatible.<br>
+        To learn how to use network features and link your game account follow the instructions here.</p>
+    </div>
+
+</div>
+
+<div class="w3-card-4 w3-white" style="margin-top: 16px; border-radius:10px">
+    <header class="w3-container w3-pory" style="line-height: 1.0; border-radius:10px">
+    <h2><b>GTS Listings</b></h2>
+    </header>
+
+</div>
+
+<div class="w3-grid" id="gts-container" style="grid-template-columns: repeat(auto-fit, 243px);justify-content: space-between;gap:12px;width:100%;">
+
+    <div class="w3-card-4 skeleton" style="margin-top: 16px;border-radius:10px;position: relative;width:243px;height:154px;"></div>
+    <div class="w3-card-4 skeleton" style="margin-top: 16px;border-radius:10px;position: relative;width:243px;height:154px;"></div>
+    <div class="w3-card-4 skeleton" style="margin-top: 16px;border-radius:10px;position: relative;width:243px;height:154px;"></div>
+    <div class="w3-card-4 skeleton" style="margin-top: 16px;border-radius:10px;position: relative;width:243px;height:154px;"></div>
+    <div class="w3-card-4 skeleton" style="margin-top: 16px;border-radius:10px;position: relative;width:243px;height:154px;"></div>
+</div>
+
+<script>
+
+console.log("Starting fetch...");
+
+Promise.all([
+  fetch('/api/gts').then(res => {
+    console.log("GTS status:", res.status);
+    return res.json();
+  })
+])
+.then(([gtsData]) => {
+  const container = document.getElementById('gts-container');
+    container.innerHTML = '';
+
+    gtsData.forEach(pokemon => {
+        const div = document.createElement('div');
+        let hstring = `
+            <div class="w3-card-4" style="margin-top: 16px;border-radius:10px;position: relative;width:243px;height:154px;">
+            <img src="{{ asset('images/pokecard.png') }}" draggable="false" style="user-select: none; image-rendering: pixelated;border-radius:10px;">
+            `;
+        if(pokemon.speciesID == '0'){
+            hstring += `                <img src="{{ asset('images/pokemon/${pokemon.speciesID}.png') }}" style="position: absolute;top: 35px;left: 17px; image-rendering: pixelated;">
+            `;
+        } else {
+            hstring += `                <img src="{{ asset('images/pokemon/${pokemon.speciesID}.png') }}" style="position: absolute;top: 35px;left: 17px; transform: scaleX(-1); image-rendering: pixelated;">
+            `;
+        }
+        hstring += `
+            <img src="{{ asset('images/pokeballs/${pokemon.ball}.png') }}" style="position: absolute;top: 104px;left: 8px; image-rendering: pixelated;">
+            <img src="{{ asset('images/lang_icons/${pokemon.language}.png') }}" style="position: absolute;top: 6px;left: 218px; image-rendering: pixelated;">
+            <img src="{{ asset('images/versions/${pokemon.version}.png') }}" style="position: absolute;top: 130px;left: 25px; image-rendering: pixelated;">
+            <img src="{{ asset('images/pokemon/${pokemon.wantedID}_icon.png') }}" style="position: absolute;top: 113px;left: 205px; image-rendering: pixelated;">
+            <svg style="position: absolute;top: 0px;left: 0px;">
+                <text class="pixel" text-rendering="geometricPrecision" x="15" y="18" style="font-palette: --white-palette;">#${pokemon.speciesID} ${pokemon.species.toUpperCase()}</text>
+                <text class="pixel" text-rendering="geometricPrecision" x="40" y="126" style="font-palette: --dark-palette;">${pokemon.level}</text>
+            `;
+        if(pokemon.gender  == 0){
+            hstring += `                <text class="pixel" text-rendering="geometricPrecision" x="66" y="126" style="font-palette: --blue-palette;">♂</text>
+            `;
+        } else if(pokemon.gender  == 1){
+            hstring += `                <text class="pixel" text-rendering="geometricPrecision" x="66" y="126" style="font-palette: --red-palette;">♀</text>
+            `;
+        }
+        hstring += `<text class="pixel" text-rendering="geometricPrecision" x="158" y="50" style="font-palette: --dark-palette;">${pokemon.nickname}</text>
+        <text class="pixel" text-rendering="geometricPrecision" x="158" y="66" style="font-palette: --dark-palette;">${pokemon.item}</text>`;
+        
+        if(pokemon.offererGender  == 0){
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="158" y="82" style="font-palette: --blue-palette;">${pokemon.offerer}</text>`;
+        } else {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="158" y="82" style="font-palette: --red-palette;">${pokemon.offerer}</text>`;
+        }
+
+        if(pokemon.OTGender  == 0){
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="158" y="98" style="font-palette: --blue-palette;">${pokemon.OT}</text>`;
+        } else {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="158" y="98" style="font-palette: --red-palette;">${pokemon.OT}</text>`;
+        }
+        
+        if(pokemon.wantedGender  == 0){
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="130" style="font-palette: --dark-palette;line-height:1;">${pokemon.wanted} <tspan class="pixel" style="font-palette: --blue-palette;line-height:1;">♂</tspan></text>`;
+        } else if(pokemon.wantedGender  == 1){
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="130" style="font-palette: --dark-palette;line-height:1;">${pokemon.wanted} <tspan class="pixel" style="font-palette: --red-palette;line-height:1;">♀</tspan></text>`;
+        } else {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="130" style="font-palette: --dark-palette;line-height:1;">${pokemon.wanted}</text>`;
+        }
+
+        if(pokemon.wantedMaxLevel  == 9){
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="146" style="font-palette: --dark-palette;line-height:1;">Lv. 9 and under</text>`;
+        } else if(pokemon.wantedMinLevel  == 10) {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="146" style="font-palette: --dark-palette;line-height:1;">Lv. 10 and up</text>`;
+        } else if(pokemon.wantedMinLevel  == 20) {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="146" style="font-palette: --dark-palette;line-height:1;">Lv. 20 and up</text>`;
+        } else if(pokemon.wantedMinLevel  == 30) {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="146" style="font-palette: --dark-palette;line-height:1;">Lv. 30 and up</text>`;
+        } else if(pokemon.wantedMinLevel  == 40) {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="146" style="font-palette: --dark-palette;line-height:1;">Lv. 40 and up</text>`;
+        } else if(pokemon.wantedMinLevel  == 50) {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="146" style="font-palette: --dark-palette;line-height:1;">Lv. 50 and up</text>`;
+        } else if(pokemon.wantedMinLevel  == 60) {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="146" style="font-palette: --dark-palette;line-height:1;">Lv. 60 and up</text>`;
+        } else if(pokemon.wantedMinLevel  == 70) {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="146" style="font-palette: --dark-palette;line-height:1;">Lv. 70 and up</text>`;
+        } else if(pokemon.wantedMinLevel  == 80) {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="146" style="font-palette: --dark-palette;line-height:1;">Lv. 80 and up</text>`;
+        } else if(pokemon.wantedMinLevel  == 90) {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="146" style="font-palette: --dark-palette;line-height:1;">Lv. 90 and up</text>`;
+        } else {
+            hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="146" style="font-palette: --dark-palette;line-height:1;">Any</text>`;
+        }
+        hstring += ` </svg>
+        </div>
+        `;
+        div.innerHTML = hstring;
+        container.appendChild(div);
+    });
+});
+
+
+
+</script>
+
+
 </div>
 {% endblock %}

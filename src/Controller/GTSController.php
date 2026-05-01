@@ -2,6 +2,10 @@
 
 namespace App\Controller;
 
+class index
+{
+}
+
 use App\Entity\PokemonGTS;
 use App\Service\MA_Helper;
 use App\Service\GTS_Helper;
@@ -16,11 +20,111 @@ class GTSController extends AbstractController
      * @Route("/g/t/s", name="app_g_t_s")
      */
     #[Route("/g/t/s", name: "app_g_t_s")]
-    public function index(): Response
+    public function index(EntityManagerInterface $entityManager): Response
     {
+        // 1. Get the repository for the Product entity
+        //$repository = $entityManager->getRepository(PokemonGTS::class);
+
+        // 2. Query the database (find all products)
+        //$pokemon=$repository->find20Pokemon();
+
+        $json = file_get_contents($this->getParameter('kernel.project_dir') . '/public/data/poke_names.json');
+        $jsondata = json_decode($json, true);
+
         return $this->render('gts/index.html.twig', [
-            'controller_name' => 'GTSController',
+            'jsondata' => $jsondata
         ]);
+    }
+
+    /**
+     * @Route("/g/t/s", name="app_g_t_s")
+     */
+    #[Route("/api/gts", name: "api_gts")]
+    public function pokemonListings(GTS_Helper $gts, EntityManagerInterface $entityManager): Response
+    {
+        // 1. Get the repository for the Product entity
+        $repository = $entityManager->getRepository(PokemonGTS::class);
+
+        $pokemon=$repository->find20Pokemon();
+
+        $pokearray = [];
+
+        for ($i = 0; $i < count($pokemon); $i++){
+            $encrypted = $pokemon[$i]->getPokemon();
+            $personality = substr($encrypted, 0, 4);
+            $otid = substr($encrypted, 4, 4);
+            $nickname = $gts->PkmnStrToASCII(substr($encrypted, 8, 10));
+            $OTname = $gts->PkmnStrToASCII(substr($encrypted, 20, 7));
+            $val = unpack('V',$personality)[1];
+            $val = $gts->GetSubstruct($val,0);
+
+            $substruct0=[];
+
+            for($j = $val*12; $j < ($val+1)*12; $j = $j+4){
+                $substruct0[$j - ($val*12)]=$encrypted[$j + 32] ^ $personality[0] ^ $otid[0];
+                $substruct0[$j - ($val*12) + 1]=$encrypted[$j + 33] ^ $personality[1] ^ $otid[1];
+                $substruct0[$j - ($val*12) + 2]=$encrypted[$j + 34] ^ $personality[2] ^ $otid[2];
+                $substruct0[$j - ($val*12) + 3]=$encrypted[$j + 35] ^ $personality[3] ^ $otid[3];
+            }
+            $ball = ord($substruct0[10]) & 0x111111;
+            $item = (ord($substruct0[3]) & 0x11) << 8 + ord($substruct0[2]);
+
+            $val = unpack('V',$personality)[1];
+            $val = $gts->GetSubstruct($val,3);
+
+            $substruct3=[];
+
+            for($j = $val*12; $j < ($val+1)*12; $j = $j+4){
+                $substruct3[$j - ($val*12)]=$encrypted[$j + 32] ^ $personality[0] ^ $otid[0];
+                $substruct3[$j - ($val*12) + 1]=$encrypted[$j + 33] ^ $personality[1] ^ $otid[1];
+                $substruct3[$j - ($val*12) + 2]=$encrypted[$j + 34] ^ $personality[2] ^ $otid[2];
+                $substruct3[$j - ($val*12) + 3]=$encrypted[$j + 35] ^ $personality[3] ^ $otid[3];
+            }
+
+            $OTgender = ord($substruct3[3]) >> 7;
+
+            $jsonData = file_get_contents($this->getParameter('kernel.project_dir') . '/public/data/poke_names.json');
+            $data = json_decode($jsonData, true);
+            $speciesname = $data[$pokemon[$i]->getDexId()];
+            $wanted = $data[$pokemon[$i]->getRequestedDexId()];
+
+            $jsonData = file_get_contents($this->getParameter('kernel.project_dir') . '/public/data/item_names.json');
+            $data = json_decode($jsonData, true);
+            $itemname = $data[$item];
+
+            $speciesID = $pokemon[$i]->getDexId();
+            if (file_exists($this->getParameter('kernel.project_dir') . '/public/images/pokemon/' . $speciesID . '.png') == FALSE) {
+                $speciesID = '0';
+            }
+
+            $wantedID = $pokemon[$i]->getRequestedDexId();
+            if (file_exists($this->getParameter('kernel.project_dir') . '/public/images/pokemon/' . $wantedID . '_icon.png') == FALSE) {
+                $wantedID = '0';
+            }
+
+            $pokearray[$i] = [
+                "speciesID" => $speciesID,
+                "species" => $speciesname,
+                "nickname" => $nickname,
+                "ball" => $ball,
+                "level" => $pokemon[$i]->getLevel(),
+                "gender" => $pokemon[$i]->getGender(),
+                "item" => $itemname,
+                "offerer" => $pokemon[$i]->getOtname(),
+                "offererGender" => $pokemon[$i]->getTrainerGender(),
+                "OT" => $OTname,
+                "OTGender" => $OTgender,
+                "wantedID" => $wantedID,
+                "wanted" => $wanted,
+                "wantedGender" => $pokemon[$i]->getRequestedGender(),
+                "wantedMinLevel" => $pokemon[$i]->getMinLevel(),
+                "wantedMaxLevel" => $pokemon[$i]->getMaxLevel(),
+                "version" => $pokemon[$i]->getVersion(),
+                "language" => $pokemon[$i]->getLanguage(),
+            ];
+        }
+
+        return $this->json($pokearray, 200, [], ['json_encode_options' => JSON_INVALID_UTF8_SUBSTITUTE]);
     }
 
     /**

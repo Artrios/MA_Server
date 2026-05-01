@@ -66,4 +66,17 @@ class PokemonGTSRepository extends ServiceEntityRepository
                 ->getOneOrNullResult()
             ;
         }
+
+
+        public function find20Pokemon(): array
+        {
+
+            $qb = $this->createQueryBuilder('p')
+                ->orderBy('p.id', 'ASC')
+                ->setMaxResults(20)
+            ;
+
+            $query = $qb->getQuery();
+            return $query->execute();
+        }
 }
