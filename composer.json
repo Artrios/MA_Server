@@ -10,7 +10,7 @@
         "amphp/http-client": "^5.3.4",
         "beberlei/doctrineextensions": "^1.5",
         "doctrine/annotations": "^2.0",
-        "doctrine/dbal": "^4.4.1",
+        "doctrine/dbal": "^4.4",
         "doctrine/doctrine-bundle": "^3.2.2",
         "doctrine/doctrine-migrations-bundle": "^4",
         "doctrine/orm": "^3.6.1",
@@ -91,7 +91,8 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "8.0.*"
+            "require": "8.0.*",
+            "docker": true
         }
     },
     "require-dev": {
