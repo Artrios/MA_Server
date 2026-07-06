@@ -219,7 +219,7 @@ class GTS_Helper
             case 11: 
                 return $this->SubstructCase($substructType,3,0,2,1);
             case 12: 
-                return $this->vSubstructCase($substructType,1,2,0,3);
+                return $this->SubstructCase($substructType,1,2,0,3);
             case 13: 
                 return $this->SubstructCase($substructType,1,3,0,2);
             case 14: 
