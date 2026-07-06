@@ -20,25 +20,31 @@ class MA_Helper
                 $hash = strtoupper(sha1("sAdeqWo3voLeC5r16DYv".$token));
 
                 // Temporarily store the token using the part that the game sends back as key
-                session_id($hash);
-                session_start();
-                $_SESSION['pid'] = $pid;
+		        ini_set('session.use_strict_mode', 0);
 
+		        session_id($hash);
+
+                session_start();
+		        $_SESSION['pid'] = $pid;
                 header_remove();
                 //libma doesn't like getting 401 response so setting to 200 for now
                 http_response_code(200);
-                header('Content-Length: 32');
-                print $token;
+		        header('Content-Length: 32');
+		        header('User-Agent: ');
+		        print $token;
                 exit();
             } else {
                 $hash = strtoupper($_GET['hash']);
                 
                 // Get the full token back
                 session_id($hash);
-                session_start();
+		        session_start();
+
                 if (!isset($_SESSION['pid'])) {
                     // If the pid is not set here, something is wrong with the auth string
                     header_remove();
+		            header('User-Agent: '.session_id());
+
                     http_response_code(401);
                     exit();
                 }
