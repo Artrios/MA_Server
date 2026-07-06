@@ -22,13 +22,13 @@ class UserProfiles
     #[ORM\Column(type: "smallint")]
     private $RomHackVer;
 
-    #[ORM\Column(type: "binary")]
+    #[ORM\Column(type: "smallint")]
     private $Language;
 
-    #[ORM\Column(type: "binary")]
+    #[ORM\Column(type: "smallint")]
     private $Country;
 
-    #[ORM\Column(type: "binary")]
+    #[ORM\Column(type: "smallint")]
     private $Region;
 
     #[ORM\Column(type: "integer")]
@@ -93,36 +93,36 @@ class UserProfiles
         return $this;
     }
 
-    public function getLanguage()
+    public function getLanguage(): ?int
     {
         return $this->Language;
     }
 
-    public function setLanguage($Language): self
+    public function setLanguage(int $Language): self
     {
         $this->Language = $Language;
 
         return $this;
     }
 
-    public function getCountry()
+    public function getCountry(): ?int
     {
         return $this->Country;
     }
 
-    public function setCountry($Country): self
+    public function setCountry(int $Country): self
     {
         $this->Country = $Country;
 
         return $this;
     }
 
-    public function getRegion()
+    public function getRegion(): ?int
     {
         return $this->Region;
     }
 
-    public function setRegion($Region): self
+    public function setRegion(int $Region): self
     {
         $this->Region = $Region;
 

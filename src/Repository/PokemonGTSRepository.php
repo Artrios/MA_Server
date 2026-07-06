@@ -19,12 +19,11 @@ class PokemonGTSRepository extends ServiceEntityRepository
         /**
          * @return PokemonGTS[] Returns an array of PokemonGTS objects
          */
-        public function searchPokemon($species, $minlevel, $maxlevel, $gender, $pid): array
+        public function searchPokemon($species, $minlevel, $maxlevel, $gender, $pid, $offset): array
         {
             $qb = $this->createQueryBuilder('p')
                 ->andWhere('p.dex_id = :species')
-                ->andWhere('CAST(p.level AS UNSIGNED) >= :minlevel')
-                ->andWhere('CAST(p.level AS UNSIGNED) <= :maxlevel')
+                ->andWhere('p.level >= :minlevel AND p.level <= :maxlevel')
                 ->andWhere('p.pid != :pid')
                 ->andWhere('p.is_exchanged = 0')
                 ->setParameter('species', $species)
@@ -33,13 +32,13 @@ class PokemonGTSRepository extends ServiceEntityRepository
                 ->setParameter('pid', $pid)
             ;
 
-            if($gender=="ANY"){
-                $query = $qb->orderBy('p.id', 'ASC')->setMaxResults(7)->getQuery();
+            if($gender==0xFF){
+                $query = $qb->orderBy('p.id', 'ASC')->setFirstResult(7*$offset)->setMaxResults(7)->getQuery();
                 return $query->execute();
             }
 
             $qb->andWhere('p.gender = :gender')->setParameter('gender', $gender);
-            $query = $qb->orderBy('p.id', 'ASC')->setMaxResults(7)->getQuery();
+            $query = $qb->orderBy('p.id', 'ASC')->setFirstResult(7*$offset)->setMaxResults(7)->getQuery();
             return $query->execute();
         }
 
@@ -72,6 +71,7 @@ class PokemonGTSRepository extends ServiceEntityRepository
         {
 
             $qb = $this->createQueryBuilder('p')
+                ->andWhere('p.is_exchanged = 0')
                 ->orderBy('p.id', 'ASC')
                 ->setMaxResults(20)
             ;

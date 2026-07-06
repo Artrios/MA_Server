@@ -14,7 +14,7 @@ class PokemonGTS
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: Types::BIGINT)]
     private ?int $checksum = null;
 
     #[ORM\Column]
@@ -26,44 +26,44 @@ class PokemonGTS
     #[ORM\Column(type: Types::SMALLINT)]
     private ?int $dex_id = null;
 
-    #[ORM\Column(type: Types::BINARY)]
-    private $gender;
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $gender = null;
 
-    #[ORM\Column(type: Types::BINARY)]
-    private $level;
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $level = null;
 
     #[ORM\Column(type: Types::SMALLINT)]
     private ?int $requested_dex_id = null;
 
-    #[ORM\Column(type: Types::BINARY)]
-    private $requested_gender;
-
-    #[ORM\Column(type: Types::BINARY)]
-    private $min_level;
-
-    #[ORM\Column(type: Types::BINARY)]
-    private $max_level;
-
-    #[ORM\Column(type: Types::BINARY)]
-    private $trainer_gender;
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $requested_gender = null;
 
     #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $min_level = null;
+
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $max_level = null;
+
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $trainer_gender = null;
+
+    #[ORM\Column(type: Types::INTEGER)]
     private ?int $trainer_id = null;
 
-    #[ORM\Column(type: Types::SMALLINT)]
+    #[ORM\Column(type: Types::INTEGER)]
     private ?int $secret_id = null;
 
     #[ORM\Column(length: 7)]
     private ?string $otname = null;
 
-    #[ORM\Column(type: Types::BINARY)]
-    private $country;
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $country = null;
 
-    #[ORM\Column(type: Types::BINARY)]
-    private $region;
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $region = null;
 
-    #[ORM\Column(type: Types::BINARY)]
-    private $trainer_class;
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $trainer_class = null;
 
     #[ORM\Column(type: Types::SMALLINT)]
     private ?int $is_exchanged = null;
@@ -77,8 +77,8 @@ class PokemonGTS
     #[ORM\Column]
     private ?int $rom_hack_ver = null;
 
-    #[ORM\Column(type: Types::BINARY)]
-    private $language;
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $language = null;
 
     public function getId(): ?int
     {
