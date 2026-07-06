@@ -58,6 +58,11 @@ class GTSController extends AbstractController
             $val = unpack('V',$personality)[1];
             $val = $gts->GetSubstruct($val,0);
 
+            $shiny = ((ord($otid) & 0xFFFF0000) >> 16) ^ (ord($otid) & 0xFFFF) ^ ((ord($personality) & 0xFFFF0000) >> 16) ^ (ord($personality) & 0xFFFF);
+            //$shinyModifier = substr($encrypted, 19, 2);
+            $shinyModifier = ord(substr($encrypted, 19, 1)) >> 7;
+            $shiny = ($shiny < 8) || $shinyModifier; 
+
             $substruct0=[];
 
             for($j = $val*12; $j < ($val+1)*12; $j = $j+4){
@@ -93,12 +98,12 @@ class GTSController extends AbstractController
             $itemname = $data[$item];
 
             $speciesID = $pokemon[$i]->getDexId();
-            if (file_exists($this->getParameter('kernel.project_dir') . '/public/images/pokemon/' . $speciesID . '.png') == FALSE) {
+            if (file_exists($this->getParameter('kernel.project_dir') . '/public/images/pokemon/' . strtolower($speciesname) . '/front.png') == FALSE) {
                 $speciesID = '0';
             }
 
             $wantedID = $pokemon[$i]->getRequestedDexId();
-            if (file_exists($this->getParameter('kernel.project_dir') . '/public/images/pokemon/' . $wantedID . '_icon.png') == FALSE) {
+            if (file_exists($this->getParameter('kernel.project_dir') . '/public/images/pokemon/' . strtolower($wanted) . '/icon.png') == FALSE) {
                 $wantedID = '0';
             }
 
@@ -109,6 +114,7 @@ class GTSController extends AbstractController
                 "ball" => $ball,
                 "level" => $pokemon[$i]->getLevel(),
                 "gender" => $pokemon[$i]->getGender(),
+                "shiny" => $shiny,
                 "item" => $itemname,
                 "offerer" => $pokemon[$i]->getOtname(),
                 "offererGender" => $pokemon[$i]->getTrainerGender(),
@@ -396,15 +402,17 @@ class GTSController extends AbstractController
         
         $checksum=unpack('V', substr($searchData,0,4))[1];
         $species=unpack('v', substr($searchData,4,2))[1];
-        $gender="ANY";
+        $gender=unpack('C', substr($searchData,6,1))[1];;
         $minlevel=unpack('C', substr($searchData,7,1))[1];
         $maxlevel=unpack('C', substr($searchData,8,1))[1];
+        $country=unpack('C', substr($searchData,9,1))[1];
+        $offset=unpack('C', substr($searchData,10,1))[1];
 
         $repository = $entityManager->getRepository(PokemonGTS::class);
 
         $pid = $_GET['pid'];
         $pid = hexdec($pid);
-        $pokemon=$repository->searchPokemon($species, $minlevel, $maxlevel, $gender, $pid);
+        $pokemon=$repository->searchPokemon($species, $minlevel, $maxlevel, $gender, $pid, $offset);
         dump("search complete");
         dump(count($pokemon));
 
@@ -416,26 +424,26 @@ class GTSController extends AbstractController
             for($i=0;$i<count($pokemon);$i++){
                 $result = $result.pack('V', $pokemon[$i]->getChecksum());
                 $result = $result.pack('V', $pokemon[$i]->getPid());
-                $result = $result.stream_get_contents($pokemon[$i]->getPokemon());
+                $result = $result.$pokemon[$i]->getPokemon();
                 $result = $result.pack('v', $pokemon[$i]->getDexId());
-                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getGender()));
-                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getLevel()));
+                $result = $result.pack('C', $pokemon[$i]->getGender());
+                $result = $result.pack('C', $pokemon[$i]->getLevel());
                 $result = $result.pack('v', $pokemon[$i]->getRequestedDexId());
-                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getRequestedGender()));
-                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getMinLevel()));
-                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getMaxLevel()));
-                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getTrainerGender()));
+                $result = $result.pack('C', $pokemon[$i]->getRequestedGender());
+                $result = $result.pack('C', $pokemon[$i]->getMinLevel());
+                $result = $result.pack('C', $pokemon[$i]->getMaxLevel());
+                $result = $result.pack('C', $pokemon[$i]->getTrainerGender());
                 $result = $result.pack('v', $pokemon[$i]->getTrainerId());
                 $result = $result.pack('v', $pokemon[$i]->getSecretId());
                 $result = $result.str_pad($pokemon[$i]->getOtname(), 7, "\xFF");
-                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getCountry()));
-                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getRegion()));
-                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getTrainerClass()));
+                $result = $result.pack('C', $pokemon[$i]->getCountry());
+                $result = $result.pack('C', $pokemon[$i]->getRegion());
+                $result = $result.pack('C', $pokemon[$i]->getTrainerClass());
                 $result = $result.pack('v', $pokemon[$i]->getIsExchanged());
                 $result = $result.pack('v', $pokemon[$i]->getVersion());
                 $result = $result.pack('v', $pokemon[$i]->getRomHackId());
                 $result = $result.pack('v', $pokemon[$i]->getRomHackVer());
-                $result = $result.pack('C', (int)stream_get_contents($pokemon[$i]->getLanguage()));
+                $result = $result.pack('C', $pokemon[$i]->getLanguage());
                 $result = $result."\x00\x00\x00";
 
             }

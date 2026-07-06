@@ -95,17 +95,22 @@ Promise.all([
             <img src="{{ asset('images/pokecard.png') }}" draggable="false" style="user-select: none; image-rendering: pixelated;border-radius:10px;">
             `;
         if(pokemon.speciesID == '0'){
-            hstring += `                <img src="{{ asset('images/pokemon/${pokemon.speciesID}.png') }}" style="position: absolute;top: 35px;left: 17px; image-rendering: pixelated;">
+            hstring += `                <img src="{{ asset('images/pokemon/question_mark/front.png') }}" style="position: absolute;top: 35px;left: 17px; image-rendering: pixelated;">
             `;
         } else {
-            hstring += `                <img src="{{ asset('images/pokemon/${pokemon.speciesID}.png') }}" style="position: absolute;top: 35px;left: 17px; transform: scaleX(-1); image-rendering: pixelated;">
-            `;
+            if(pokemon.shiny){
+                hstring += `                <img src="{{ asset('images/pokemon/${pokemon.species.toLowerCase()}/front_shiny.png') }}" style="position: absolute;top: 35px;left: 17px; transform: scaleX(-1); image-rendering: pixelated;">
+                `;
+            } else {
+                hstring += `                <img src="{{ asset('images/pokemon/${pokemon.species.toLowerCase()}/front.png') }}" style="position: absolute;top: 35px;left: 17px; transform: scaleX(-1); image-rendering: pixelated;">
+                `;
+            }
         }
         hstring += `
             <img src="{{ asset('images/pokeballs/${pokemon.ball}.png') }}" style="position: absolute;top: 104px;left: 8px; image-rendering: pixelated;">
             <img src="{{ asset('images/lang_icons/${pokemon.language}.png') }}" style="position: absolute;top: 6px;left: 218px; image-rendering: pixelated;">
             <img src="{{ asset('images/versions/${pokemon.version}.png') }}" style="position: absolute;top: 130px;left: 25px; image-rendering: pixelated;">
-            <img src="{{ asset('images/pokemon/${pokemon.wantedID}_icon.png') }}" style="position: absolute;top: 113px;left: 205px; image-rendering: pixelated;">
+            <img src="{{ asset('images/pokemon/${pokemon.wanted.toLowerCase()}/icon.png') }}" style="position: absolute;top: 113px;left: 205px; image-rendering: pixelated;">
             <svg style="position: absolute;top: 0px;left: 0px;">
                 <text class="pixel" text-rendering="geometricPrecision" x="15" y="18" style="font-palette: --white-palette;">#${pokemon.speciesID} ${pokemon.species.toUpperCase()}</text>
                 <text class="pixel" text-rendering="geometricPrecision" x="40" y="126" style="font-palette: --dark-palette;">${pokemon.level}</text>
