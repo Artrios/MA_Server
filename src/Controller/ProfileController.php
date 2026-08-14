@@ -64,11 +64,13 @@ class ProfileController extends AbstractController
      * @Route("/pokemonrse/common/setprofile", name="set_profile")
      */
     #[Route("/pokemonrse/common/setprofile", name: "set_profile")]
-    public function set(MA_Helper $helper, UserProfilesRepository $profile)
+    public function set(MA_Helper $helper, EntityManagerInterface $entityManager)
     {
         $helper->doAuth();
 
-        $profile = $profile->find($_GET['pid']);
+        $repository = $entityManager->getRepository(UserProfiles::class);
+
+        $profile = $repository->getUser(hexdec($_GET['pid']));
 
         if($profile==NULL){
             return new Response('',Response::HTTP_UNAUTHORIZED);
@@ -77,7 +79,7 @@ class ProfileController extends AbstractController
 
         $profileData = $helper->decrypt_data();
 
-        if($profile->getTrainerID!=substr($profileData,10,4)){
+        if($profile->getId()!=substr($profileData,10,4)){
             return new Response('',Response::HTTP_UNAUTHORIZED);
         }
 

@@ -39,6 +39,17 @@ class UserProfilesRepository extends ServiceEntityRepository
         }
     }
 
+    // Get the player's data
+    public function getUser($pid): ?UserProfiles
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.id = :val')
+            ->setParameter('val', $pid)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+
 //    /**
 //     * @return UserProfiles[] Returns an array of UserProfiles objects
 //     */
