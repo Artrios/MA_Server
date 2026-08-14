@@ -14,6 +14,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+const DEPOSITED = 0;
+const EXCHANGED = 1; //Will download the Pokemon from /result
+const DEPOSITED_AWAITING_CONFIRMATION = 2; //Waits for /post_finish or /exchange_finish to change it to DEPOSITED
+const TO_REMOVE = 3;
+
 class GTSController extends AbstractController
 {
     /**
@@ -60,7 +65,7 @@ class GTSController extends AbstractController
 
             $shiny = ((ord($otid) & 0xFFFF0000) >> 16) ^ (ord($otid) & 0xFFFF) ^ ((ord($personality) & 0xFFFF0000) >> 16) ^ (ord($personality) & 0xFFFF);
             //$shinyModifier = substr($encrypted, 19, 2);
-            $shinyModifier = ord(substr($encrypted, 19, 1)) >> 7;
+            $shinyModifier = (ord(substr($encrypted, 31, 1)) >> 6) & 0x1;
             $shiny = ($shiny < 8) || $shinyModifier; 
 
             $substruct0=[];
@@ -90,7 +95,8 @@ class GTSController extends AbstractController
 
             $jsonData = file_get_contents($this->getParameter('kernel.project_dir') . '/public/data/poke_names.json');
             $data = json_decode($jsonData, true);
-            $speciesname = $data[$pokemon[$i]->getDexId()];
+            //$speciesname = $data[$pokemon[$i]->getDexId()];
+            $speciesname = $data[((ord($substruct0[1]) & 0x7) << 8) + ord($substruct0[0])];
             $wanted = $data[$pokemon[$i]->getRequestedDexId()];
 
             $jsonData = file_get_contents($this->getParameter('kernel.project_dir') . '/public/data/item_names.json');
@@ -170,7 +176,7 @@ class GTSController extends AbstractController
         else{
             dump("Pokemon Found");
             $result="";
-            if($pokemon->getIsExchanged()==1){
+            if($pokemon->getIsExchanged()==EXCHANGED){
                 dump("Sending Pokemon");
                 $result = $result.pack('V', $pokemon->getChecksum());
                 $result = $result.pack('V', $pokemon->getPid());
@@ -228,7 +234,7 @@ class GTSController extends AbstractController
             $result=0x0001;
         }
         else{
-            $result=stream_get_contents($pokemon->getPokemon());
+            $result=$pokemon->getPokemon();
             $ar = pack('n', $result);
             return new Response($result,Response::HTTP_OK,["content-length" => 80]);
         }
@@ -341,7 +347,7 @@ class GTSController extends AbstractController
         $pokemon->setCountry(unpack('C', substr($pokemonData,110,1))[1]);
         $pokemon->setRegion(unpack('C', substr($pokemonData,111,1))[1]);
         $pokemon->setTrainerClass(unpack('C', substr($pokemonData,112,1))[1]);
-        $pokemon->setIsExchanged(2);
+        $pokemon->setIsExchanged(DEPOSITED_AWAITING_CONFIRMATION);
         $pokemon->setVersion(unpack('v', substr($pokemonData,114,2))[1]);
         $pokemon->setRomHackId(unpack('v', substr($pokemonData,116,2))[1]);
         $pokemon->setRomHackVer(unpack('v', substr($pokemonData,118,2))[1]);
@@ -374,7 +380,7 @@ class GTSController extends AbstractController
             $result=0x0002;
         }
         else{
-            $pokemon->setIsExchanged(0);
+            $pokemon->setIsExchanged(DEPOSITED);
             $entityManager->persist($pokemon);
             $entityManager->flush();
             $result=0x0001;
@@ -481,7 +487,7 @@ class GTSController extends AbstractController
             $ar = pack('n', 0x0002);
             return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
         }
-        elseif($pokemon->getIsExchanged() != 0){
+        elseif($pokemon->getIsExchanged() != DEPOSITED){
             //Traded to another player
             $ar = pack('n', 0x0002);
             return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
@@ -517,7 +523,7 @@ class GTSController extends AbstractController
         $pokemon->setCountry(unpack('C', substr($pokemonData,110,1))[1]);
         $pokemon->setRegion(unpack('C', substr($pokemonData,111,1))[1]);
         $pokemon->setTrainerClass(unpack('C', substr($pokemonData,112,1))[1]);
-        $pokemon->setIsExchanged(2);
+        $pokemon->setIsExchanged(DEPOSITED_AWAITING_CONFIRMATION);
         $pokemon->setVersion(unpack('v', substr($pokemonData,114,2))[1]);
         $pokemon->setRomHackId(unpack('v', substr($pokemonData,116,2))[1]);
         $pokemon->setRomHackVer(unpack('v', substr($pokemonData,118,2))[1]);
@@ -558,7 +564,7 @@ class GTSController extends AbstractController
             return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
         }
 
-        if($pokemonold->getIsExchanged() != 0){
+        if($pokemonold->getIsExchanged() != DEPOSITED){
             dump("Old Pokemon not available");
             dump($pokemonold->getIsExchanged());
             $ar = pack('n', 0x0003);
@@ -566,7 +572,7 @@ class GTSController extends AbstractController
         }
 
         //Edit old Pokemon
-        $pokemonold->setIsExchanged(3);
+        $pokemonold->setIsExchanged(TO_REMOVE);
         $entityManager->persist($pokemonold);
         $entityManager->flush();
 
@@ -579,13 +585,13 @@ class GTSController extends AbstractController
         $pokemon=$repository->findExchangedPokemon($pid);
         if($pokemon==NULL){
             $ar = pack('n', 0x0004);
-            $pokemonold->setIsExchanged(0);
+            $pokemonold->setIsExchanged(DEPOSITED);
             $entityManager->persist($pokemonold);
             $entityManager->flush();
             return new Response($ar,Response::HTTP_OK,["content-length" => 2]);
         }
         $pokemon->setPid($pidold);
-        $pokemon->setIsExchanged(1);
+        $pokemon->setIsExchanged(EXCHANGED);
         $entityManager->persist($pokemon);
         $entityManager->flush();
 
