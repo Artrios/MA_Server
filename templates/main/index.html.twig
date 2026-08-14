@@ -101,6 +101,8 @@ Promise.all([
             if(pokemon.shiny){
                 hstring += `                <img src="{{ asset('images/pokemon/${pokemon.species.toLowerCase()}/front_shiny.png') }}" style="position: absolute;top: 35px;left: 17px; transform: scaleX(-1); image-rendering: pixelated;">
                 `;
+                hstring += `                <img src="{{ asset('images/misc/shiny_star.png') }}" style="position: absolute;top: 114px;left: 74px; transform: scaleX(-1); image-rendering: pixelated;">
+                `;
             } else {
                 hstring += `                <img src="{{ asset('images/pokemon/${pokemon.species.toLowerCase()}/front.png') }}" style="position: absolute;top: 35px;left: 17px; transform: scaleX(-1); image-rendering: pixelated;">
                 `;
@@ -112,13 +114,13 @@ Promise.all([
             <img src="{{ asset('images/versions/${pokemon.version}.png') }}" style="position: absolute;top: 130px;left: 25px; image-rendering: pixelated;">
             <img src="{{ asset('images/pokemon/${pokemon.wanted.toLowerCase()}/icon.png') }}" style="position: absolute;top: 113px;left: 205px; image-rendering: pixelated;">
             <svg style="position: absolute;top: 0px;left: 0px;">
-                <text class="pixel" text-rendering="geometricPrecision" x="15" y="18" style="font-palette: --white-palette;">#${pokemon.speciesID} ${pokemon.species.toUpperCase()}</text>
+                <text class="pixel" text-rendering="geometricPrecision" x="15" y="18" style="font-palette: --white-palette;">#${pokemon.speciesID} ${pokemon.species.split('_')[0].toUpperCase()}</text>
                 <text class="pixel" text-rendering="geometricPrecision" x="40" y="126" style="font-palette: --dark-palette;">${pokemon.level}</text>
             `;
         if(pokemon.gender  == 0){
             hstring += `                <text class="pixel" text-rendering="geometricPrecision" x="66" y="126" style="font-palette: --blue-palette;">♂</text>
             `;
-        } else if(pokemon.gender  == 1){
+        } else if(pokemon.gender  == 254){
             hstring += `                <text class="pixel" text-rendering="geometricPrecision" x="66" y="126" style="font-palette: --red-palette;">♀</text>
             `;
         }
@@ -139,7 +141,7 @@ Promise.all([
         
         if(pokemon.wantedGender  == 0){
             hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="130" style="font-palette: --dark-palette;line-height:1;">${pokemon.wanted} <tspan class="pixel" style="font-palette: --blue-palette;line-height:1;">♂</tspan></text>`;
-        } else if(pokemon.wantedGender  == 1){
+        } else if(pokemon.wantedGender  == 254){
             hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="130" style="font-palette: --dark-palette;line-height:1;">${pokemon.wanted} <tspan class="pixel" style="font-palette: --red-palette;line-height:1;">♀</tspan></text>`;
         } else {
             hstring += `<text class="pixel" text-rendering="geometricPrecision" x="104" y="130" style="font-palette: --dark-palette;line-height:1;">${pokemon.wanted}</text>`;
