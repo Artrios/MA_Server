@@ -30,7 +30,6 @@ class MA_Helper
                 //libma doesn't like getting 401 response so setting to 200 for now
                 http_response_code(200);
 		        header('Content-Length: 32');
-		        header('User-Agent: ');
 		        print $token;
                 exit();
             } else {
@@ -43,7 +42,6 @@ class MA_Helper
                 if (!isset($_SESSION['pid'])) {
                     // If the pid is not set here, something is wrong with the auth string
                     header_remove();
-		            header('User-Agent: '.session_id());
 
                     http_response_code(401);
                     exit();
