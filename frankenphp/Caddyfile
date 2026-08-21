@@ -3,6 +3,8 @@
 
 	{$CADDY_GLOBAL_OPTIONS}
 
+	acme_dns cloudflare {$CLOUDFLARE_API_TOKEN}
+
 	frankenphp {
 		{$FRANKENPHP_CONFIG}
 	}
@@ -10,7 +12,7 @@
 
 {$CADDY_EXTRA_CONFIG}
 
-:80 { log {
+https://example.com { log {
 		{$CADDY_SERVER_LOG_OPTIONS}
 		# Redact the authorization query parameter that can be set by Mercure
 		format filter {
@@ -61,5 +63,20 @@
 
 	file_server {
 		hide *.php
+	}
+}
+
+# HTTP site
+:80 {
+	root * /app/public
+
+	@pokemonrse path /pokemonrse /pokemonrse/*
+	handle @pokemonrse {
+		php_server
+	}
+
+	# Everything else gets redirected to HTTPS
+	handle {
+		redir https://example.com{uri} 308
 	}
 }
