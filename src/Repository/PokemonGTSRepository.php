@@ -72,7 +72,7 @@ class PokemonGTSRepository extends ServiceEntityRepository
 
             $qb = $this->createQueryBuilder('p')
                 ->andWhere('p.is_exchanged = 0')
-                ->orderBy('p.id', 'ASC')
+                ->orderBy('p.id', 'DESC')
                 ->setMaxResults(20)
             ;
 
