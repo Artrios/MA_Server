@@ -76,7 +76,7 @@ class GTSController extends AbstractController
                 $substruct0[$j - ($val*12) + 2]=$encrypted[$j + 34] ^ $personality[2] ^ $otid[2];
                 $substruct0[$j - ($val*12) + 3]=$encrypted[$j + 35] ^ $personality[3] ^ $otid[3];
             }
-            $ball = ord($substruct0[10]) & 0x111111;
+            $ball = ord($substruct0[11]) & 0x111111;
             $item = (ord($substruct0[3]) & 0x11) << 8 + ord($substruct0[2]);
 
             $val = unpack('V',$personality)[1];
