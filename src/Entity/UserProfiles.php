@@ -31,7 +31,7 @@ class UserProfiles
     #[ORM\Column(type: "smallint")]
     private $Region;
 
-    #[ORM\Column(type: "integer")]
+    #[ORM\Column(type: Types::BIGINT)]
     private $TrainerID;
 
     #[ORM\Column(type: "string", length: 16)]
