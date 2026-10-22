@@ -33,12 +33,12 @@ class PokemonGTSRepository extends ServiceEntityRepository
             ;
 
             if($gender==0xFF){
-                $query = $qb->orderBy('p.id', 'ASC')->setFirstResult(7*$offset)->setMaxResults(7)->getQuery();
+                $query = $qb->orderBy('p.id', 'DESC')->setFirstResult(7*$offset)->setMaxResults(7)->getQuery();
                 return $query->execute();
             }
 
             $qb->andWhere('p.gender = :gender')->setParameter('gender', $gender);
-            $query = $qb->orderBy('p.id', 'ASC')->setFirstResult(7*$offset)->setMaxResults(7)->getQuery();
+            $query = $qb->orderBy('p.id', 'DESC')->setFirstResult(7*$offset)->setMaxResults(7)->getQuery();
             return $query->execute();
         }
 
