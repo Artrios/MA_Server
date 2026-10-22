@@ -66,7 +66,7 @@ class GTSController extends AbstractController
             $shiny = ((ord($otid) & 0xFFFF0000) >> 16) ^ (ord($otid) & 0xFFFF) ^ ((ord($personality) & 0xFFFF0000) >> 16) ^ (ord($personality) & 0xFFFF);
             //$shinyModifier = substr($encrypted, 19, 2);
             $shinyModifier = (ord(substr($encrypted, 31, 1)) >> 6) & 0x1;
-            $shiny = ($shiny < 8) || $shinyModifier; 
+            $shiny = $shinyModifier; 
 
             $substruct0=[];
 
@@ -76,8 +76,8 @@ class GTSController extends AbstractController
                 $substruct0[$j - ($val*12) + 2]=$encrypted[$j + 34] ^ $personality[2] ^ $otid[2];
                 $substruct0[$j - ($val*12) + 3]=$encrypted[$j + 35] ^ $personality[3] ^ $otid[3];
             }
-            $ball = ord($substruct0[11]) & 0x111111;
-            $item = (ord($substruct0[3]) & 0x11) << 8 + ord($substruct0[2]);
+            $ball = ord($substruct0[10]) & 0x3F;
+            $item = (ord($substruct0[3]) << 8 + ord($substruct0[2])) & 0x3FF;
 
             $val = unpack('V',$personality)[1];
             $val = $gts->GetSubstruct($val,3);
@@ -175,34 +175,11 @@ class GTSController extends AbstractController
         }
         else{
             dump("Pokemon Found");
-            $result="";
             if($pokemon->getIsExchanged()==EXCHANGED){
                 dump("Sending Pokemon");
-                $result = $result.pack('V', $pokemon->getChecksum());
-                $result = $result.pack('V', $pokemon->getPid());
-                $result = $result.stream_get_contents($pokemon->getPokemon());
-                $result = $result.pack('v', $pokemon->getDexId());
-                $result = $result.pack('C', (int)stream_get_contents($pokemon->getGender()));
-                $result = $result.pack('C', (int)stream_get_contents($pokemon->getLevel()));
-                $result = $result.pack('v', $pokemon->getRequestedDexId());
-                $result = $result.pack('C', (int)stream_get_contents($pokemon->getRequestedGender()));
-                $result = $result.pack('C', (int)stream_get_contents($pokemon->getMinLevel()));
-                $result = $result.pack('C', (int)stream_get_contents($pokemon->getMaxLevel()));
-                $result = $result.pack('C', (int)stream_get_contents($pokemon->getTrainerGender()));
-                $result = $result.pack('v', $pokemon->getTrainerId());
-                $result = $result.pack('v', $pokemon->getSecretId());
-                $result = $result.str_pad($pokemon->getOtname(), 7, "\xFF");
-                $result = $result.pack('C', (int)stream_get_contents($pokemon->getCountry()));
-                $result = $result.pack('C', (int)stream_get_contents($pokemon->getRegion()));
-                $result = $result.pack('C', (int)stream_get_contents($pokemon->getTrainerClass()));
-                $result = $result.pack('v', $pokemon->getIsExchanged());
-                $result = $result.pack('v', $pokemon->getVersion());
-                $result = $result.pack('v', $pokemon->getRomHackId());
-                $result = $result.pack('v', $pokemon->getRomHackVer());
-                $result = $result.pack('C', (int)stream_get_contents($pokemon->getLanguage()));
-                $result = $result."\x00\x00\x00";
+                $result = $pokemon->getPokemon();
                 dump(strlen($result));
-                return new Response($result,Response::HTTP_OK,["content-length" => strlen($result)]);
+                return new Response($result,Response::HTTP_OK,["content-length" => 80]);
             }
             else{
                 dump("Pokemon not traded");
