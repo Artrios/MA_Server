@@ -2,7 +2,7 @@
 html{box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}
 /* Extract from normalize.css by Nicolas Gallagher and Jonathan Neal git.io/normalize */
 html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}
-article,aside,details,figcaption,figure,footer,header,main,menu,nav,section{display:block}summary{display:list-item}
+article,aside,details,figcaption,figure,header,menu,nav,section{display:block}summary{display:list-item}
 audio,canvas,progress,video{display:inline-block}progress{vertical-align:baseline}
 audio:not([controls]){display:none;height:0}[hidden],template{display:none}
 a{background-color:transparent}a:active,a:hover{outline-width:0}
@@ -251,6 +251,77 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}
 .w3-border-dark-grey,.w3-hover-border-dark-grey:hover,.w3-border-dark-gray,.w3-hover-border-dark-gray:hover{border-color:#616161!important}
 .w3-border-pale-red,.w3-hover-border-pale-red:hover{border-color:#ffe7e7!important}.w3-border-pale-green,.w3-hover-border-pale-green:hover{border-color:#e7ffe7!important}
 .w3-border-pale-yellow,.w3-hover-border-pale-yellow:hover{border-color:#ffffcc!important}.w3-border-pale-blue,.w3-hover-border-pale-blue:hover{border-color:#e7ffff!important}
+
+html {
+    min-height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensures body takes up the full screen height */
+  margin: 0;
+  gap: 20px;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+.footer-minimal {
+    background-color: var(--footer-bg-color);
+    color: var(--footer-text-color);
+    font-size: 0.875rem;
+    border-top: 1px solid #e7e7e7;
+}
+
+.footer-minimal__container {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+
+    /* Mobile-first: stack items vertically and center them */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.footer-minimal__copyright {
+    margin: 0;
+    text-align: center;
+}
+
+.footer-minimal__nav ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    gap: 1.5rem; /* Space between icons */
+}
+
+.footer-minimal__nav a {
+    color: var(--footer-text-color);
+    transition: color 0.2s ease-in-out;
+}
+
+.footer-minimal__nav a:hover {
+    color: var(--footer-link-hover-color);
+}
+
+.footer-minimal__nav svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor; /* Inherits the color of the parent link */
+}
+
+footer {
+  text-align: center;
+  padding: 3px;
+  color: white;
+  margin-top: auto;
+}
+
 
 @font-face {
     font-family: 'Pokemon Emerald';
